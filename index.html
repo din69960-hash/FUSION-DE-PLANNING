@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1a3a5c">
+<link rel="icon" type="image/png" href="icons/favicon.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Sports Corbas">
 <title>Équipements sportifs de Corbas — Créneaux &amp; manifestations</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="commun.js"></script>
@@ -40,6 +48,23 @@
   .btn-enter{background:var(--or);color:#fff;font-family:'Syne',sans-serif;font-weight:700;font-size:13px;padding:9px 24px;border-radius:30px;border:none;cursor:pointer;transition:.2s;}
   .btn-enter:hover{background:var(--or2);}
   .pied{position:relative;z-index:1;margin-top:40px;color:rgba(255,255,255,.4);font-size:11.5px;text-align:center;}
+
+  /* ===== INSTALLATION DE L'APPLICATION ===== */
+  .install-bar{position:relative;z-index:1;display:none;align-items:center;gap:14px;width:584px;max-width:100%;margin:0 auto 24px;
+    background:rgba(200,151,42,.16);border:1px solid var(--or);border-radius:var(--r2);padding:14px 18px;text-align:left;cursor:pointer;transition:.2s;}
+  .install-bar.on{display:flex;}
+  .install-bar:hover{background:rgba(200,151,42,.26);}
+  .install-bar img{width:46px;height:46px;border-radius:11px;flex-shrink:0;}
+  .install-bar .txt{flex:1;min-width:0;}
+  .install-bar h2{font-family:'Syne',sans-serif;font-size:16px;font-weight:700;color:#fff;margin-bottom:2px;}
+  .install-bar p{font-size:12.5px;color:rgba(255,255,255,.65);line-height:1.4;}
+  .install-bar .btn-enter{flex-shrink:0;}
+  .inst-etapes{text-align:left;margin:16px 0 4px;padding:0;list-style:none;counter-reset:e;}
+  .inst-etapes li{counter-increment:e;position:relative;padding:8px 0 8px 40px;font-size:14px;color:var(--bleu);line-height:1.45;}
+  .inst-etapes li::before{content:counter(e);position:absolute;left:0;top:7px;width:27px;height:27px;border-radius:50%;background:var(--or);color:#fff;
+    font-family:'Syne',sans-serif;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;}
+  .inst-ico{display:inline-block;border:1.5px solid var(--bleu2);color:var(--bleu2);border-radius:6px;padding:0 6px;font-weight:700;font-size:13px;}
+  @media (max-width:640px){ .install-bar{padding:12px 14px;gap:12px;} .install-bar .btn-enter{padding:8px 14px;} }
 
   /* ===== MODALES ===== */
   .modal-ov{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:1000;align-items:center;justify-content:center;padding:16px;}
@@ -172,6 +197,14 @@
     <div class="login-badge">Ville de Corbas · Service des sports</div>
     <h1>Équipements sportifs<br><span>de Corbas</span></h1>
     <p>Créneaux à l'année et manifestations ponctuelles : un seul site pour saisir vos demandes et consulter les plannings.</p>
+  </div>
+  <div class="install-bar" id="install-bar" onclick="installerAppli()">
+    <img src="icons/icon-192.png" alt="">
+    <div class="txt">
+      <h2>📲 Installer l'application</h2>
+      <p>Ajoutez le site sur l'écran d'accueil de votre téléphone, comme une vraie application.</p>
+    </div>
+    <button class="btn-enter" type="button">Installer</button>
   </div>
   <div class="login-cards">
     <div class="login-card" onclick="ouvrirConnexionAsso()">
@@ -905,5 +938,82 @@ window.addEventListener('load',async()=>{
   else entrerAdmin();
 });
 </script>
+<!-- ===================== INSTALLATION (mode d'emploi) ===================== -->
+<div class="modal-ov" id="modal-install" onclick="if(event.target===this)this.classList.remove('on')">
+  <div class="modal-box">
+    <img src="icons/icon-192.png" alt="" style="width:64px;height:64px;border-radius:15px;margin-bottom:10px">
+    <h3>Installer l'application</h3>
+    <p id="inst-intro" style="font-size:13.5px;color:var(--gris2)"></p>
+    <ol class="inst-etapes" id="inst-etapes"></ol>
+    <button class="btn btn-primary" type="button" style="width:100%;margin-top:12px" onclick="document.getElementById('modal-install').classList.remove('on')">J'ai compris</button>
+  </div>
+</div>
+
+<script>
+// ===================== INSTALLATION DE L'APPLICATION =====================
+(function(){
+  const ua = navigator.userAgent || '';
+  const estIOS = /iPad|iPhone|iPod/.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const estAndroid = /Android/i.test(ua);
+  const estMobile = estIOS || estAndroid;
+  const dejaInstallee = () => window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+  let invite = null;   // invitation d'installation fournie par Chrome / Edge / Samsung Internet
+
+  function afficher(){
+    const bar = document.getElementById('install-bar');
+    if(!bar) return;
+    bar.classList.toggle('on', !dejaInstallee() && (estMobile || !!invite));
+  }
+
+  window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); invite = e; afficher(); });
+  window.addEventListener('appinstalled', () => { invite = null; afficher(); });
+  document.addEventListener('DOMContentLoaded', afficher);
+  afficher();
+
+  function modeEmploi(){
+    const intro = document.getElementById('inst-intro');
+    const etapes = document.getElementById('inst-etapes');
+    let liste;
+    if(estIOS){
+      const pasSafari = /CriOS|FxiOS|EdgiOS|OPiOS/.test(ua);
+      intro.textContent = pasSafari
+        ? "Sur iPhone, le plus simple est d'ouvrir ce site dans Safari."
+        : "Sur iPhone et iPad, l'installation se fait depuis Safari :";
+      liste = [
+        pasSafari ? "Copiez l'adresse du site et ouvrez-la dans <b>Safari</b>." : null,
+        "Touchez le bouton <b>Partager</b> <span class=\"inst-ico\">⬆︎</span> en bas de l'écran (ou en haut sur iPad).",
+        "Faites défiler et touchez <b>« Sur l'écran d'accueil »</b>.",
+        "Touchez <b>Ajouter</b> : l'icône « Sports Corbas » apparaît sur votre écran d'accueil."
+      ].filter(Boolean);
+    } else if(estAndroid){
+      intro.textContent = "Sur Android, depuis Chrome :";
+      liste = [
+        "Touchez le menu <span class=\"inst-ico\">⋮</span> en haut à droite.",
+        "Touchez <b>« Installer l'application »</b> ou <b>« Ajouter à l'écran d'accueil »</b>.",
+        "Confirmez : l'icône « Sports Corbas » apparaît sur votre écran d'accueil."
+      ];
+    } else {
+      intro.textContent = "Sur ordinateur, depuis Chrome ou Edge :";
+      liste = [
+        "Cliquez sur l'icône d'installation <span class=\"inst-ico\">⊕</span> à droite de la barre d'adresse.",
+        "Cliquez sur <b>Installer</b>."
+      ];
+    }
+    etapes.innerHTML = liste.map(t => '<li>' + t + '</li>').join('');
+    document.getElementById('modal-install').classList.add('on');
+  }
+
+  window.installerAppli = async function(){
+    if(invite){
+      invite.prompt();
+      try{ const r = await invite.userChoice; if(r && r.outcome === 'accepted') invite = null; }catch(e){}
+      afficher();
+      return;
+    }
+    modeEmploi();
+  };
+})();
+</script>
+
 </body>
 </html>

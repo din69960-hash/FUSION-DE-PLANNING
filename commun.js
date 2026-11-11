@@ -101,3 +101,8 @@ const FU = {
   esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); },
   norm(s){ return String(s||'').trim().replace(/\s+/g,' ').toLowerCase(); }
 };
+
+// ---------- Application installable (service worker) ----------
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+}
