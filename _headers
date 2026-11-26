@@ -1,0 +1,11 @@
+# En-têtes de sécurité ajoutés par Cloudflare Pages (sans effet sur GitHub Pages)
+/*
+  X-Frame-Options: SAMEORIGIN
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=()
+  Strict-Transport-Security: max-age=31536000
+
+# Le service worker doit toujours être relu pour que les mises à jour arrivent vite
+/sw.js
+  Cache-Control: no-cache

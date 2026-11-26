@@ -2,16 +2,15 @@
 // Appelée par le site après l'enregistrement d'une demande : { token, saison, id }.
 // Le message est composé ici, à partir de la base : le site ne peut pas choisir le destinataire
 // ni le contenu (pas de relais de mails ouvert).
+// Envoi : Brevo (secret BREVO_API_KEY), à défaut Resend (secret RESEND_API_KEY). Jamais de clé dans le code.
 import { createClient } from "npm:@supabase/supabase-js@2";
+import { envoiMail, MAIL_PRET, MAIL_ABSENT } from "./envoi.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
-// Clé Resend : secret RESEND_API_KEY à définir dans Supabase (Edge Functions → Secrets). Jamais écrite dans le code.
-const RESEND_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
-const FROM = Deno.env.get("RESEND_FROM") ?? "Planning Corbas <onboarding@resend.dev>";
 
 const esc = (s: unknown) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
 const json = (o: unknown, status = 200) => new Response(JSON.stringify(o), { status, headers: { ...CORS, "Content-Type": "application/json" } });
@@ -46,22 +45,12 @@ Deno.serve(async (req) => {
     <p style="color:#5a6b85;font-size:12px">Saison ${esc(prep.saison)}–${esc(Number(prep.saison) + 1)} · ${esc(prep.mois)} · demande enregistrée le ${esc(r.ddate)}.<br>Message automatique du planning des équipements sportifs de Corbas.</p>
   </div>`;
 
-  let statut = "erreur", detail = "";
-  if (!RESEND_KEY) {
-    detail = "Secret RESEND_API_KEY non défini dans Supabase : mail non envoyé.";
-    await sb.rpc("fu_mail_resultat", { p_log: prep.log, p_statut: statut, p_detail: detail });
-    return json({ envoye: false, detail }, 503);
+  if (!MAIL_PRET) {
+    await sb.rpc("fu_mail_resultat", { p_log: prep.log, p_statut: "erreur", p_detail: MAIL_ABSENT });
+    return json({ envoye: false, detail: MAIL_ABSENT }, 503);
   }
-  try {
-    const res = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_KEY}` },
-      body: JSON.stringify({ from: FROM, to: [prep.dest], subject: `Nouvelle demande de manifestation — ${asso}`, html }),
-    });
-    const out = await res.json().catch(() => ({}));
-    statut = res.ok ? "envoye" : "erreur";
-    detail = JSON.stringify(out);
-  } catch (e) { detail = String(e); }
-  await sb.rpc("fu_mail_resultat", { p_log: prep.log, p_statut: statut, p_detail: detail });
-  return json({ envoye: statut === "envoye", detail: statut === "envoye" ? undefined : detail }, statut === "envoye" ? 200 : 502);
+  const e = await envoiMail(prep.dest, `Nouvelle demande de manifestation — ${asso}`, html);
+  const statut = e.ok ? "envoye" : "erreur";
+  await sb.rpc("fu_mail_resultat", { p_log: prep.log, p_statut: statut, p_detail: e.detail });
+  return json({ envoye: e.ok, detail: e.ok ? undefined : e.detail }, e.ok ? 200 : 502);
 });

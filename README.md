@@ -30,6 +30,18 @@ Sécurité : les tables sont en lecture seule pour le public ; **toute écriture
 
 ## Mail automatique
 
-À chaque nouvelle demande de manifestation d'une association, la fonction `supabase/functions/fusion-mail` envoie un mail à l'adresse réglée dans le menu administrateur (par défaut sports@ville-corbas.fr). Le message est composé par le serveur à partir de la base : la fonction ne peut pas servir de relais pour envoyer d'autres mails.
+À chaque nouvelle demande de manifestation d'une association, la fonction `supabase/functions/fusion-mail` envoie un mail à l'adresse réglée dans le menu administrateur. Le message est composé par le serveur à partir de la base : la fonction ne peut pas servir de relais pour envoyer d'autres mails.
 
-Elle a besoin du secret **`RESEND_API_KEY`** (Supabase → Edge Functions → Secrets). Tant que le domaine n'est pas vérifié chez Resend, l'expéditeur `onboarding@resend.dev` ne peut écrire qu'à l'adresse du compte Resend ; on peut changer l'expéditeur avec le secret `RESEND_FROM`.
+Envoi par **Brevo** (secret `BREVO_API_KEY`, expéditeur `BREVO_FROM`) ; Resend reste en secours si seul `RESEND_API_KEY` existe. Les secrets sont dans Supabase → Edge Functions → Secrets, jamais dans le code.
+
+## Hébergement (gratuit)
+
+Dépôt **privé** sur GitHub, site publié par **Cloudflare Pages** :
+
+| Réglage Cloudflare Pages | Valeur |
+|---|---|
+| Framework preset | None |
+| Build command | `sh build.sh` |
+| Build output directory | `dist` |
+
+`build.sh` ne copie que les fichiers du site : le dossier `supabase/`, ce README et le script ne sont jamais publiés. `_headers` ajoute des en-têtes de sécurité. Chaque envoi sur GitHub met le site à jour automatiquement.
